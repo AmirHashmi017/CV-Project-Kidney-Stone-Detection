@@ -1,0 +1,8 @@
+
+=== Kidney Stone Segmentation Metrics ===
+Images processed : 316
+Mean Dice Score  : 0.1948
+Mean IoU Score   : 0.1103
+Mean Precision   : 0.1162
+Mean Recall      : 0.8255
+=========================================
