@@ -1,0 +1,8 @@
+
+====== U-Net Kidney Stone Segmentation Metrics ======
+Images tested  : 316
+Mean Dice Score: 0.9060
+Mean IoU Score : 0.8390
+Mean Precision : 0.9059
+Mean Recall    : 0.9194
+=====================================================
