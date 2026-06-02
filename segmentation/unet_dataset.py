@@ -1,9 +1,3 @@
-"""
-Dataset for U-Net Segmentation Training
-- Loads Stone images from the split directory
-- Generates binary GT masks from bounding-box annotations
-  (bbox region is filled white = stone; everything else black = background)
-"""
 import os
 import glob
 import cv2
@@ -13,7 +7,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 
-IMG_SIZE = 256   # U-Net input size (must be divisible by 16)
+IMG_SIZE = 256   
 
 
 class KidneyStoneSegDataset(Dataset):
@@ -38,7 +32,6 @@ class KidneyStoneSegDataset(Dataset):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
 
-        # ── Build GT mask from bbox annotations ──────────────────────────────
         base     = os.path.splitext(os.path.basename(img_path))[0]
         lbl_path = os.path.join(self.lbl_dir, base + ".txt")
         gt_mask  = np.zeros((h, w), dtype=np.uint8)
@@ -55,12 +48,9 @@ class KidneyStoneSegDataset(Dataset):
                         y2 = int((cy + bh / 2) * h)
                         cv2.rectangle(gt_mask, (x1, y1), (x2, y2), 255, -1)
 
-        # ── Resize both to fixed size ─────────────────────────────────────────
         img     = cv2.resize(img,     (IMG_SIZE, IMG_SIZE))
         gt_mask = cv2.resize(gt_mask, (IMG_SIZE, IMG_SIZE),
                              interpolation=cv2.INTER_NEAREST)
-
-        # Optional horizontal flip augmentation
         if self.augment and np.random.rand() > 0.5:
             img     = cv2.flip(img,     1)
             gt_mask = cv2.flip(gt_mask, 1)

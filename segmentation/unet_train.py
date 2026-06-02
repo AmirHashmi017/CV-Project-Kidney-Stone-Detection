@@ -1,23 +1,14 @@
-"""
-U-Net Training Script for Kidney Stone Segmentation
-Week 4 - CV Project
-
-Loss: BCE + Dice combined
-Optimizer: Adam
-"""
 import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 
-# ── Handle both local and Colab imports ──────────────────────────────────────
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from unet_model   import UNet
 from unet_dataset import KidneyStoneSegDataset
 
-# ─── Config ──────────────────────────────────────────────────────────────────
 TRAIN_IMG_DIR = "dataset/split/train/Stone"
 TRAIN_LBL_DIR = "annotations_auto/train"
 MODEL_SAVE    = "models/unet_stone.pth"
@@ -27,7 +18,6 @@ NUM_EPOCHS    = 15
 DEVICE        = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-# ─── Combined BCE + Dice Loss ─────────────────────────────────────────────────
 class BCEDiceLoss(nn.Module):
     def __init__(self, smooth=1e-6):
         super().__init__()
@@ -48,7 +38,6 @@ class BCEDiceLoss(nn.Module):
 def main():
     print(f"Device: {DEVICE}")
 
-    # ── Dataset ───────────────────────────────────────────────────────────────
     full_ds  = KidneyStoneSegDataset(TRAIN_IMG_DIR, TRAIN_LBL_DIR, augment=True)
     val_size = max(1, int(0.15 * len(full_ds)))
     trn_size = len(full_ds) - val_size
@@ -61,7 +50,6 @@ def main():
 
     print(f"Train: {len(train_ds)} | Val: {len(val_ds)}")
 
-    # ── Model ─────────────────────────────────────────────────────────────────
     model     = UNet(in_channels=3, out_channels=1).to(DEVICE)
     criterion = BCEDiceLoss()
     optimizer = optim.Adam(model.parameters(), lr=LR)
@@ -69,9 +57,7 @@ def main():
 
     best_val_loss = float("inf")
 
-    # ── Training loop ─────────────────────────────────────────────────────────
     for epoch in range(1, NUM_EPOCHS + 1):
-        # --- Train ---
         model.train()
         train_loss = 0.0
         for imgs, masks in train_loader:
@@ -85,7 +71,6 @@ def main():
 
         train_loss /= len(train_loader)
 
-        # --- Validate ---
         model.eval()
         val_loss = 0.0
         dice_sum = 0.0

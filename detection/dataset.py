@@ -10,8 +10,7 @@ class KidneyStoneDetectionDataset(Dataset):
         self.labels_dir = labels_dir
         self.transform = transform
         
-        # We only consider Stone class as annotated, but there are subfolders in dataset/split/train.
-        # So images_dir like: dataset/split/train/Stone
+        
         self.image_files = sorted(glob.glob(os.path.join(self.images_dir, '*.jpg')))
         
     def __len__(self):
@@ -35,10 +34,10 @@ class KidneyStoneDetectionDataset(Dataset):
                 for line in lines:
                     parts = line.strip().split()
                     if len(parts) == 5:
-                        cls_id = int(parts[0]) # Since background is 0, we'll keep stone as 1
+                        cls_id = int(parts[0]) 
                         cx, cy, cw, ch = map(float, parts[1:])
                         
-                        # Convert YOLO to [xmin, ymin, xmax, ymax]
+                     
                         xmin = (cx - cw / 2) * w
                         ymin = (cy - ch / 2) * h
                         xmax = (cx + cw / 2) * w
@@ -48,11 +47,10 @@ class KidneyStoneDetectionDataset(Dataset):
                         ymin = max(0, ymin)
                         xmax = min(w, xmax)
                         ymax = min(h, ymax)
-                        
-                        # sometimes cw or ch could result in invalid boxes
+                       
                         if xmax > xmin and ymax > ymin:
                             boxes.append([xmin, ymin, xmax, ymax])
-                            labels.append(1) # Faster R-CNN expects 0 as background, 1 as first foreground class
+                            labels.append(1) 
         
         if len(boxes) > 0:
             boxes = torch.as_tensor(boxes, dtype=torch.float32)
@@ -73,9 +71,6 @@ class KidneyStoneDetectionDataset(Dataset):
         target["iscrowd"] = iscrowd
         
         if self.transform is not None:
-            # Need transform that doesn't break target bounding boxes.
-            # ToTensor() standardizes 0-1 but we might need torchvision.transforms.functional
-            # Here we just apply ToTensor manually to image
             from torchvision.transforms import ToTensor
             image = ToTensor()(image)
             

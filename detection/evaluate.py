@@ -27,11 +27,10 @@ def compute_iou(box1, box2):
     return inter_area / union_area
 
 def calculate_map(predictions, targets, iou_threshold=0.5):
-    # Flatten all predictions and targets across dataset
+
     all_preds = []
     
-    # Store targets for each image
-    # image_idx: [boxes]
+
     target_dict = {}
     
     for img_idx, (preds, targs) in enumerate(zip(predictions, targets)):
@@ -50,8 +49,7 @@ def calculate_map(predictions, targets, iou_threshold=0.5):
         t_boxes = targs['boxes'].cpu().numpy()
         t_labels = targs['labels'].cpu().numpy()
         target_dict[img_idx] = {'boxes': t_boxes, 'labels': t_labels, 'matched': [False]*len(t_boxes)}
-    
-    # Sort predictions by score descending
+ 
     all_preds = sorted(all_preds, key=lambda x: x['score'], reverse=True)
     
     tp = np.zeros(len(all_preds))
@@ -78,19 +76,17 @@ def calculate_map(predictions, targets, iou_threshold=0.5):
         if best_iou >= iou_threshold:
             if not targs['matched'][best_target_idx]:
                 tp[i] = 1
-                targs['matched'][best_target_idx] = True # Mark as matched
+                targs['matched'][best_target_idx] = True 
             else:
-                fp[i] = 1 # Duplicate detection -> false positive
+                fp[i] = 1 
         else:
             fp[i] = 1
             
-    # Calculate Precision Recall curve
     cum_tp = np.cumsum(tp)
     cum_fp = np.cumsum(fp)
     recalls = cum_tp / num_ground_truths
     precisions = cum_tp / (cum_tp + cum_fp + 1e-6)
     
-    # Calculate Average Precision (AP) using standard formulation
     ap = 0.0
     for t in np.arange(0.0, 1.1, 0.1):
         if np.sum(recalls >= t) == 0:
@@ -131,13 +127,13 @@ def main():
             
             preds = model(images)
             
-            # Unbatch images back for visualization
+            
             for j, (img_tensor, pred, targ) in enumerate(zip(images, preds, targets)):
                 idx = i * 4 + j
                 all_predictions.append(pred)
                 all_targets.append(targ)
                 
-                # Plot images with confidence > 0.5
+                
                 img = img_tensor.cpu().numpy().transpose(1, 2, 0)
                 img = (img * 255).astype(np.uint8).copy()
                 
@@ -145,12 +141,12 @@ def main():
                 p_scores = pred['scores'].cpu().numpy()
                 t_boxes = targ['boxes'].cpu().numpy()
                 
-                # Draw Ground Truths (Green)
+                
                 for tbox in t_boxes:
                     x1, y1, x2, y2 = map(int, tbox)
                     cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
                     
-                # Draw Predictions (Red)
+               
                 for p_box, score in zip(p_boxes, p_scores):
                     if score > 0.5:
                         x1, y1, x2, y2 = map(int, p_box)
@@ -159,13 +155,11 @@ def main():
                         
                 cv2.imwrite(os.path.join(results_dir, f"test_img_{idx}.jpg"), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
-    # Calculate AP@50
     mAP_50 = calculate_map(all_predictions, all_targets, iou_threshold=0.5)
     print(f"\n======================================")
     print(f"Mean Average Precision (mAP@0.5): {mAP_50:.4f}")
     print(f"======================================\n")
     
-    # Save results to metrics.txt
     with open("d:/CV-Project-Kidney-Stone-Detection/results/detection_metrics.txt", "w") as f:
         f.write("Object Detection Results\n")
         f.write("========================\n")

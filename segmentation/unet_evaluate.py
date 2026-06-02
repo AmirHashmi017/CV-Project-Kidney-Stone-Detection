@@ -1,13 +1,3 @@
-"""
-U-Net Evaluation Script for Kidney Stone Segmentation
-Week 4 - CV Project
-
-Outputs:
-- Binary masks  → results/segmentation/unet_masks/
-- Colour overlays → results/segmentation/unet_overlays/
-- Metrics file  → results/unet_segmentation_metrics.txt
-- Metrics chart → results/unet_metrics_chart.png
-"""
 import os, sys
 import glob
 import cv2
@@ -23,7 +13,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from unet_model   import UNet
 from unet_dataset import KidneyStoneSegDataset, IMG_SIZE
 
-# ─── Paths ────────────────────────────────────────────────────────────────────
 TEST_IMG_DIR  = "dataset/split/test/Stone"
 TEST_LBL_DIR  = "annotations_auto/test"
 MODEL_PATH    = "models/unet_stone.pth"
@@ -61,7 +50,6 @@ def prec_rec(pred, gt, smooth=1e-6):
 
 
 def main():
-    # ── Load model ────────────────────────────────────────────────────────────
     model = UNet(in_channels=3, out_channels=1).to(DEVICE)
     model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
     model.eval()
@@ -83,20 +71,16 @@ def main():
 
             base = Path(img_paths[i]).stem
 
-            # Save binary mask (resized back to orig)
             orig  = cv2.imread(img_paths[i])
             oh, ow = orig.shape[:2]
             pred_full = cv2.resize(pred_mask, (ow, oh), interpolation=cv2.INTER_NEAREST)
             cv2.imwrite(os.path.join(OUT_MASKS, f"{base}_unet_mask.png"), pred_full)
-
-            # Colour overlay (green = predicted stone)
             overlay    = orig.copy()
             green      = np.zeros_like(orig)
             green[pred_full == 255] = (0, 255, 0)
             overlay    = cv2.addWeighted(overlay, 0.7, green, 0.3, 0)
             cv2.imwrite(os.path.join(OUT_OVERLAYS, f"{base}_unet_overlay.jpg"), overlay)
 
-            # Metrics
             d  = dice(pred_mask, gt_mask)
             iu = iou (pred_mask, gt_mask)
             pr, re = prec_rec(pred_mask, gt_mask)
@@ -108,7 +92,6 @@ def main():
                 print(f"[{i+1}/{len(test_ds)}] {base} | Dice={d:.3f} IoU={iu:.3f} "
                       f"Prec={pr:.3f} Rec={re:.3f}")
 
-    # ── Summary ───────────────────────────────────────────────────────────────
     m_dice = np.mean(dice_s); m_iou = np.mean(iou_s)
     m_prec = np.mean(prec_s); m_rec = np.mean(rec_s)
 
@@ -125,7 +108,6 @@ def main():
     with open(METRICS_FILE, "w") as f:
         f.write(summary)
 
-    # ── Bar chart ─────────────────────────────────────────────────────────────
     labels = ["Dice", "IoU", "Precision", "Recall"]
     vals   = [m_dice, m_iou, m_prec, m_rec]
     colors = ["#4CAF50", "#2196F3", "#FF9800", "#9C27B0"]
